@@ -1,46 +1,11 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts";
+import useFinanceStore from "./store/useFinanceStore";
 
 // ─── MOCK DATA ──────────────────────────────────────────────────────────────
-let _n = 0;
-const uid = () => `tx_${++_n}`;
-
-const INIT_TX = [
-  { id: uid(), date: "2024-12-28", desc: "Monthly Salary",     cat: "Salary",        type: "income",  amt: 85000 },
-  { id: uid(), date: "2024-12-27", desc: "Zomato Delivery",    cat: "Food & Dining", type: "expense", amt: 450   },
-  { id: uid(), date: "2024-12-26", desc: "Electricity Bill",   cat: "Bills",         type: "expense", amt: 2100  },
-  { id: uid(), date: "2024-12-25", desc: "Amazon Purchase",    cat: "Shopping",      type: "expense", amt: 3200  },
-  { id: uid(), date: "2024-12-24", desc: "Ola Cab",            cat: "Transport",     type: "expense", amt: 180   },
-  { id: uid(), date: "2024-12-23", desc: "Netflix",            cat: "Entertainment", type: "expense", amt: 649   },
-  { id: uid(), date: "2024-12-22", desc: "Freelance Project",  cat: "Freelance",     type: "income",  amt: 15000 },
-  { id: uid(), date: "2024-12-21", desc: "Pharmacy",           cat: "Healthcare",    type: "expense", amt: 850   },
-  { id: uid(), date: "2024-12-20", desc: "Mutual Fund SIP",    cat: "Investment",    type: "expense", amt: 10000 },
-  { id: uid(), date: "2024-12-19", desc: "Restaurant Dinner",  cat: "Food & Dining", type: "expense", amt: 1800  },
-  { id: uid(), date: "2024-12-18", desc: "Metro Recharge",     cat: "Transport",     type: "expense", amt: 500   },
-  { id: uid(), date: "2024-12-17", desc: "Mobile Recharge",    cat: "Bills",         type: "expense", amt: 399   },
-  { id: uid(), date: "2024-12-15", desc: "Swiggy Orders",      cat: "Food & Dining", type: "expense", amt: 780   },
-  { id: uid(), date: "2024-12-14", desc: "Movie Tickets",      cat: "Entertainment", type: "expense", amt: 1200  },
-  { id: uid(), date: "2024-12-12", desc: "Gym Membership",     cat: "Healthcare",    type: "expense", amt: 2500  },
-  { id: uid(), date: "2024-12-10", desc: "Dividend Income",    cat: "Investment",    type: "income",  amt: 3200  },
-  { id: uid(), date: "2024-12-08", desc: "Flipkart Order",     cat: "Shopping",      type: "expense", amt: 5600  },
-  { id: uid(), date: "2024-12-05", desc: "Petrol Fill",        cat: "Transport",     type: "expense", amt: 2000  },
-  { id: uid(), date: "2024-12-03", desc: "Internet Bill",      cat: "Bills",         type: "expense", amt: 999   },
-  { id: uid(), date: "2024-12-01", desc: "Coffee Shop",        cat: "Food & Dining", type: "expense", amt: 320   },
-  { id: uid(), date: "2024-11-30", desc: "Monthly Salary",     cat: "Salary",        type: "income",  amt: 85000 },
-  { id: uid(), date: "2024-11-28", desc: "Weekend Outing",     cat: "Entertainment", type: "expense", amt: 3500  },
-  { id: uid(), date: "2024-11-25", desc: "Grocery Shopping",   cat: "Food & Dining", type: "expense", amt: 4200  },
-  { id: uid(), date: "2024-11-22", desc: "Cab Fare",           cat: "Transport",     type: "expense", amt: 650   },
-  { id: uid(), date: "2024-11-20", desc: "Freelance Work",     cat: "Freelance",     type: "income",  amt: 20000 },
-  { id: uid(), date: "2024-11-18", desc: "Clothing Purchase",  cat: "Shopping",      type: "expense", amt: 4800  },
-  { id: uid(), date: "2024-11-15", desc: "Doctor Visit",       cat: "Healthcare",    type: "expense", amt: 1500  },
-  { id: uid(), date: "2024-11-12", desc: "Electricity Bill",   cat: "Bills",         type: "expense", amt: 1900  },
-  { id: uid(), date: "2024-11-10", desc: "Mutual Fund SIP",    cat: "Investment",    type: "expense", amt: 10000 },
-  { id: uid(), date: "2024-11-05", desc: "Books",              cat: "Entertainment", type: "expense", amt: 890   },
-];
-
 const TREND = [
   { month: "Jul", balance: 142000, income: 95000, expense: 68000 },
   { month: "Aug", balance: 158000, income: 98000, expense: 72000 },
@@ -66,13 +31,13 @@ const CAT_EMOJI = {
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 export default function FinanceDashboard() {
-  const [role,    setRole]    = useState("viewer");
-  const [tx,      setTx]      = useState(INIT_TX);
-  const [tab,     setTab]     = useState("dashboard");
-  const [filters, setFilters] = useState({ cat: "all", type: "all", search: "" });
-  const [sort,    setSort]    = useState({ field: "date", dir: "desc" });
-  const [modal,   setModal]   = useState(false);
-  const [form,    setForm]    = useState({ date: "", desc: "", cat: "Food & Dining", type: "expense", amt: "" });
+  const store = useFinanceStore();
+  const { 
+    role, setRole, tx, tab, setTab, 
+    filters, setFilters, sort, toggleSort,
+    modal, setModal, form, setForm, 
+    addTx, delTx 
+  } = store;
 
   const isAdmin = role === "admin";
 
@@ -120,18 +85,7 @@ export default function FinanceDashboard() {
     };
   }, [pieData, tx, summary]);
 
-  // ── Handlers ─────────────────────────────────────────────────────────────
-  const addTx = () => {
-    if (!form.date || !form.desc || !form.amt) return;
-    setTx(prev => [{ ...form, id: uid(), amt: parseFloat(form.amt) }, ...prev]);
-    setForm({ date: "", desc: "", cat: "Food & Dining", type: "expense", amt: "" });
-    setModal(false);
-  };
-  const delTx       = (id) => setTx(prev => prev.filter(t => t.id !== id));
-  const toggleSort  = (field) => setSort(prev =>
-    prev.field === field ? { ...prev, dir: prev.dir === "asc" ? "desc" : "asc" } : { field, dir: "desc" }
-  );
-  const sortIcon    = (field) => sort.field === field ? (sort.dir === "desc" ? " ↓" : " ↑") : " ↕";
+  const sortIcon = (field) => sort.field === field ? (sort.dir === "desc" ? " ↓" : " ↑") : " ↕";
 
   // ── Custom Tooltips ───────────────────────────────────────────────────────
   const AreaTip = ({ active, payload, label }) => {
@@ -393,14 +347,14 @@ export default function FinanceDashboard() {
             {/* Filters */}
             <div style={{ ...card, padding:"16px 20px", marginBottom:16, display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
               <input placeholder="🔍  Search descriptions, categories…" value={filters.search}
-                onChange={e => setFilters(f => ({...f, search:e.target.value}))}
+                onChange={e => setFilters({ search:e.target.value })}
                 style={{ flex:"1 1 200px", background:"#07101f", border:"1px solid #1e2d47", color:"#e2e8f5", borderRadius:8, padding:"8px 14px", fontSize:13, fontFamily:"Outfit" }} />
-              <select value={filters.cat} onChange={e => setFilters(f => ({...f, cat:e.target.value}))}
+              <select value={filters.cat} onChange={e => setFilters({ cat:e.target.value })}
                 style={{ background:"#07101f", border:"1px solid #1e2d47", color:"#e2e8f5", borderRadius:8, padding:"8px 12px", fontSize:13, fontFamily:"Outfit", cursor:"pointer" }}>
                 <option value="all">All Categories</option>
                 {ALL_CATS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              <select value={filters.type} onChange={e => setFilters(f => ({...f, type:e.target.value}))}
+              <select value={filters.type} onChange={e => setFilters({ type:e.target.value })}
                 style={{ background:"#07101f", border:"1px solid #1e2d47", color:"#e2e8f5", borderRadius:8, padding:"8px 12px", fontSize:13, fontFamily:"Outfit", cursor:"pointer" }}>
                 <option value="all">All Types</option>
                 <option value="income">Income</option>
@@ -618,7 +572,7 @@ export default function FinanceDashboard() {
               <div key={f.key} style={{ marginBottom:16 }}>
                 <label style={{ fontSize:11, color:"#5a6e8a", textTransform:"uppercase", letterSpacing:"0.5px", display:"block", marginBottom:6 }}>{f.label}</label>
                 <input type={f.type} placeholder={f.ph} value={form[f.key]}
-                  onChange={e => setForm(p => ({...p, [f.key]:e.target.value}))}
+                  onChange={e => setForm({ [f.key]:e.target.value })}
                   style={{ width:"100%", background:"#070d1a", border:"1px solid #1e2d47", color:"#e2e8f5", borderRadius:8, padding:"10px 14px", fontSize:14, fontFamily:"Outfit" }} />
               </div>
             ))}
@@ -627,7 +581,7 @@ export default function FinanceDashboard() {
               <label style={{ fontSize:11, color:"#5a6e8a", textTransform:"uppercase", letterSpacing:"0.5px", display:"block", marginBottom:6 }}>Type</label>
               <div style={{ display:"flex", gap:8 }}>
                 {["income","expense"].map(t => (
-                  <button key={t} className="hov-btn" onClick={() => setForm(p => ({...p, type:t, cat: t==="income"?"Salary":"Food & Dining"}))} style={{
+                  <button key={t} className="hov-btn" onClick={() => setForm({ type:t, cat: t==="income"?"Salary":"Food & Dining" })} style={{
                     flex:1, background: form.type===t ? (t==="income"?"rgba(0,212,161,0.14)":"rgba(255,64,96,0.14)") : "#091020",
                     color:      form.type===t ? (t==="income"?"#00d4a1":"#ff4060") : "#5a6e8a",
                     border:`1px solid ${form.type===t ? (t==="income"?"rgba(0,212,161,0.28)":"rgba(255,64,96,0.28)") : "#1e2d47"}`,
@@ -639,7 +593,7 @@ export default function FinanceDashboard() {
 
             <div style={{ marginBottom:24 }}>
               <label style={{ fontSize:11, color:"#5a6e8a", textTransform:"uppercase", letterSpacing:"0.5px", display:"block", marginBottom:6 }}>Category</label>
-              <select value={form.cat} onChange={e => setForm(p => ({...p, cat:e.target.value}))} style={{
+              <select value={form.cat} onChange={e => setForm({ cat:e.target.value })} style={{
                 width:"100%", background:"#070d1a", border:"1px solid #1e2d47", color:"#e2e8f5",
                 borderRadius:8, padding:"10px 14px", fontSize:14, fontFamily:"Outfit", cursor:"pointer"
               }}>
