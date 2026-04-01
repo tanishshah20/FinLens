@@ -17,6 +17,7 @@ A clean, interactive, and modern financial dashboard built with React and Vite. 
 ## Tech Stack
 
 *   **Framework**: React (Bootstrapped with Vite)
+*   **State Management**: Zustand (for clean, robust global state handling)
 *   **Data Visualization**: Recharts (for Area and Pie charts)
 *   **Styling**: Plain CSS with modular inline styles, ensuring zero dependency on massive UI libraries while maintaining a stunning glassmorphism aesthetic.
 *   **Icons**: Native emojis for lightweight and fast rendering.
@@ -37,8 +38,8 @@ A clean, interactive, and modern financial dashboard built with React and Vite. 
 
 ## Overview of Approach
 
-*   **State Management**: React `useState` is used for handling local component state (role, transactions list, tabs, form inputs, etc.), while `useMemo` is heavily utilized to derive summary statistics, filter data, and sort records efficiently without unnecessary recalculations.
-*   **Component Structure**: The entire dashboard is modularized conceptually within a single file for this assignment to reduce complexity, leveraging different "Tabs" for component views (Dashboard, Transactions, Insights).
+*   **State Management**: **Zustand** is utilized as the central global store (`useFinanceStore`) to handle the application's core data (transactions, filters, selected tabs, roles, and form inputs). React's `useMemo` is heavily leveraged on top of this global state to derive summary statistics, dynamically filter data, and sort records efficiently without unnecessary recalculations.
+*   **Component Structure**: The main UI resides in `App.jsx`, pulling state directly from the isolated Zustand store to keep rendering logic clean and strictly separated from business logic.
 *   **Design Philosophy**: Focus on a premium "Dark Mode" aesthetic using subtle gradients, blur filters (backdrop-filter), and carefully selected color palettes to ensure high readability and a modern feel.
 
 ## Optional Enhancements Included
